@@ -3,13 +3,13 @@ from piece import *
 from square import Square
 from move import Move
 from sys import exit
-from AI import Handle
 
 class Board:
 	def __init__(self):
 		self.chess = [[0, 0, 0, 0, 0, 0, 0, 0] for i in range(ROWS)]
 		self.last_move = Move(Square(-1, -1), Square(-1, -1))
 		self.checkmate_pos = (-1, -1)
+		self.is_check = False
 		self.create()
 		self.add_piece("white")
 		self.add_piece("black")
@@ -26,7 +26,9 @@ class Board:
 			pos = self.loc_of_king("black")
 		else:
 			pos = self.loc_of_king("white")
-		if(pos == None): exit()
+		if(pos == None): 
+			is_check = True
+			return
 
 		for row in range(ROWS):
 			for col in range(COLS):
@@ -35,7 +37,7 @@ class Board:
 						self.calc_moves(self.chess[row][col].piece, row, col)
 						for move in self.chess[row][col].piece.moves:
 							if move.final.row == pos[0] and move.final.col == pos[1]:
-								print("ITS A CHECKMATE")
+								#print("ITS A CHECK")
 								self.checkmate_pos = pos
 								return
 		self.checkmate_pos = (-1, -1)
@@ -49,13 +51,16 @@ class Board:
 		piece.moves = []
 		self.last_move = move
 		self.calc_all_moves(piece.color)
-		
 
+	def undo_move(self, move, piece, opp):
+		self.chess[move.initial.row][move.initial.col].piece = piece
+		self.chess[move.final.row][move.final.col].piece = opp
+	
 	def is_valid_move(self, piece, move):
 		return move in piece.moves
 	
 	def calc_moves(self, piece, row, col):
-
+		piece.moves = []
 		def knight_calc():
 			possible_moves = [
 				(row-2, col+1), (row-1, col+2), (row+1, col+2), (row+2, col+1), (row+2, col-1), (row+1, col-2), (row-1, col-2), (row-2, col-1)
@@ -65,7 +70,7 @@ class Board:
 				if Square.in_range(pos_move_row, pos_move_col):
 					if self.chess[pos_move_row][pos_move_col].isEmpty_or_rival(piece.color):
 						initial = Square(row, col)
-						final = Square(pos_move_row, pos_move_col)
+						final = Square(pos_move_row, pos_move_col, self.chess[pos_move_row][pos_move_col].piece)
 						move = Move(initial, final)
 						piece.add_move(move)
 				
@@ -77,7 +82,7 @@ class Board:
 				if Square.in_range(cur_row):
 					if self.chess[cur_row][col].isEmpty():
 						initial = Square(row, col)
-						final = Square(cur_row, col)
+						final = Square(cur_row, col, self.chess[cur_row][col].piece)
 						move = Move(initial, final)
 						piece.add_move(move)
 					else: break
@@ -89,7 +94,7 @@ class Board:
 				if Square.in_range(diag_row, dg_col):
 					if self.chess[diag_row][dg_col].has_rival_piece(piece.color):
 						initial = Square(row, col)
-						final = Square(diag_row, dg_col)
+						final = Square(diag_row, dg_col, self.chess[diag_row][dg_col].piece)
 						move = Move(initial, final)
 						piece.add_move(move)
 
@@ -101,7 +106,7 @@ class Board:
 				while True:
 					if Square.in_range(pos_move_row, pos_move_col):
 						initial = Square(row, col)
-						final = Square(pos_move_row, pos_move_col)
+						final = Square(pos_move_row, pos_move_col, self.chess[pos_move_row][pos_move_col].piece)
 						move = Move(initial, final)
 							
 						if self.chess[pos_move_row][pos_move_col].isEmpty():
@@ -125,7 +130,7 @@ class Board:
 				if Square.in_range(r, c):
 					if self.chess[r][c].isEmpty_or_rival(piece.color):
 						initial = Square(row, col)
-						final = Square(r, c)
+						final = Square(r, c, self.chess[r][c].piece)
 						move = Move(initial, final)	
 						piece.add_move(move)
 
