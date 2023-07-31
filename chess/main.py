@@ -4,6 +4,7 @@ from consts import *
 from game_ import Game
 from square import Square
 from move import Move
+import os
 from AI import Handle
 
 class Main:
@@ -16,6 +17,7 @@ class Main:
 		self.game = Game()
 		self.dragger = self.game.dragger
 		self.board = self.game.board
+		self.ai = Handle(self.game)
 
 	def main(self):
 		screen = self.screen
@@ -76,9 +78,16 @@ class Main:
 							game.check_mate(screen)
 							game.show_piece(screen)
 							game.determine_player()
+							
+							ai_move = self.ai.handle()
+							board.make_move(ai_move[1], ai_move[0])
+							game.show_bg(screen)
+							game.show_last_moves(screen)
+							game.check_mate(screen)
+							game.show_piece(screen)
+							game.determine_player()
 					dragger.un_drag()
-					ai_pos = Handle()
-
+				
 				elif event.type == pygame.QUIT:
 					exit()
 			self.main_screen.blit(screen, (0, 0))
