@@ -34,7 +34,7 @@ class Main:
             game.show_moves(screen)
             game.check_mate(screen)
             game.show_piece(screen)
-
+            game.show_hover(screen)
             if dragger.isDragging:
                 dragger.update_blit(screen)
 
@@ -57,12 +57,14 @@ class Main:
                             game.show_piece(screen)
 
                 elif event.type == pygame.MOUSEMOTION:
+                    game.set_hover(event.pos[1] // SQSIZE, event.pos[0] // SQSIZE)
                     if dragger.isDragging:
                         dragger.update_ms(event.pos)
                         game.show_bg(screen)
                         game.show_last_moves(screen)
                         game.show_moves(screen)
                         game.show_piece(screen)
+                        game.show_hover(screen)
                         dragger.update_blit(screen)
 
                 elif event.type == pygame.MOUSEBUTTONUP:
@@ -82,11 +84,10 @@ class Main:
                             game.check_mate(screen)
                             game.show_piece(screen)
                             game.determine_player()
-                            dragger.un_drag()
                             self.is_ai_calculating = True
                             pygame.time.set_timer(pygame.USEREVENT, 100)
-
-                elif event.type == pygame.USEREVENT:
+                    dragger.un_drag()
+                if event.type == pygame.USEREVENT:
                     if self.is_ai_calculating:
                         ai_move = self.ai.handle()
                         self.ai_move = ai_move
