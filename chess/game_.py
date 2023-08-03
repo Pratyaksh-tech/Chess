@@ -8,14 +8,15 @@ class Game:
 		self.next_player = "white"
 		self.board = Board()
 		self.dragger = Dragger()
+		self.hov = (-1, -1)
 	
 	def show_bg(self, screen):
 		for i in range(ROWS):
 			for j in range(COLS):
 				if (i+j) % 2 == 0:
-					color = (112,102,119)
+					color = "#613c00"
 				else:
-					color = (204,183,174)
+					color = "#ffd28874"
 				rect = (j*SQSIZE, i*SQSIZE, SQSIZE, SQSIZE)
 				pygame.draw.rect(screen, color, rect)
 
@@ -61,3 +62,11 @@ class Game:
 		color = "red"
 		rect = (j * SQSIZE, i * SQSIZE, SQSIZE, SQSIZE)
 		pygame.draw.rect(screen, color, rect)
+
+	def show_hover(self, screen):
+		color = (180, 180, 180)
+		rect = (self.hov[1] * SQSIZE, self.hov[0] * SQSIZE, SQSIZE, SQSIZE)
+		pygame.draw.rect(screen, color, rect, width=3)		
+	
+	def set_hover(self, row, col):
+		self.hov = (row, col)
