@@ -48,12 +48,13 @@ class Main:
                         piece_ = board.chess[pressed_row][pressed_col].piece
                         if piece_.color == game.next_player:
                             piece_.moves = []
-                            board.calc_moves(piece_, pressed_row, pressed_col)
+                            board.construct_valid_moves(piece_, pressed_row, pressed_col)
                             dragger.save_initial(event.pos)
                             dragger.drag_piece(piece_)
                             game.show_bg(screen)
                             game.show_last_moves(screen)
                             game.show_moves(screen)
+                            game.check_mate(screen)
                             game.show_piece(screen)
 
                 elif event.type == pygame.MOUSEMOTION:
@@ -63,8 +64,9 @@ class Main:
                         game.show_bg(screen)
                         game.show_last_moves(screen)
                         game.show_moves(screen)
+                        game.check_mate(screen)
                         game.show_piece(screen)
-                        game.show_hover(screen)
+                        if board.in_range_move(dragger.piece.moves, event.pos[1] // SQSIZE, event.pos[0] // SQSIZE): game.show_hover(screen)
                         dragger.update_blit(screen)
 
                 elif event.type == pygame.MOUSEBUTTONUP:
@@ -78,14 +80,13 @@ class Main:
                         move = Move(initial, final)
 
                         if board.is_valid_move(dragger.piece, move):
-                            board.make_move(dragger.piece, move)
+                            board.make_move(dragger.piece, move, True)
                             game.show_bg(screen)
                             game.show_last_moves(screen)
-                            game.check_mate(screen)
                             game.show_piece(screen)
                             game.determine_player()
                             self.is_ai_calculating = True
-                            pygame.time.set_timer(pygame.USEREVENT, 100)
+                            pygame.time.set_timer(pygame.USEREVENT, 500)
                     dragger.un_drag()
                 if event.type == pygame.USEREVENT:
                     if self.is_ai_calculating:
@@ -97,7 +98,7 @@ class Main:
                     exit()
 
             if self.ai_move:
-                board.make_move(self.ai_move[1], self.ai_move[0])
+                board.make_move(self.ai_move[1], self.ai_move[0], True)
                 game.show_bg(screen)
                 game.show_last_moves(screen)
                 game.check_mate(screen)
