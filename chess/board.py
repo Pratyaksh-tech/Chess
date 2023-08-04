@@ -3,16 +3,19 @@ from piece import *
 from square import Square
 from move import Move
 from sys import exit
+from config import Config
 
 class Board:
 	def __init__(self):
 		self.chess = [[0, 0, 0, 0, 0, 0, 0, 0] for i in range(ROWS)]
 		self.last_move = Move(Square(-1, -1), Square(-1, -1))
 		self.checkmate_pos = (-1, -1)
-		self.is_check = False
+		self.is_check = (False, None)
+		self.checkmate = False
 		self.create()
 		self.add_piece("white")
 		self.add_piece("black")
+		self.config = Config()
 
 	def loc_of_king(self, color):
 		for row in range(ROWS):
@@ -27,9 +30,8 @@ class Board:
 		else:
 			pos = self.loc_of_king("white")
 		if(pos == None): 
-			is_check = True
 			return
-
+		
 		for row in range(ROWS):
 			for col in range(COLS):
 				if not self.chess[row][col].isEmpty():
@@ -37,25 +39,59 @@ class Board:
 						self.calc_moves(self.chess[row][col].piece, row, col)
 						for move in self.chess[row][col].piece.moves:
 							if move.final.row == pos[0] and move.final.col == pos[1]:
-								#print("ITS A CHECK")
+								self.is_check = (True, self.chess[pos[0]][pos[1]].piece.color)
 								self.checkmate_pos = pos
+								self.checkmate = True
 								return
+		self.is_check = (False, None)
 		self.checkmate_pos = (-1, -1)
+		self.checkmate = False
 
-	def make_move(self, piece, move):
+	def construct_valid_moves(self, piece, row, col):
+		piece.moves = []
+		self.calc_moves(piece, row, col)
+		moves = piece.moves
+		to_be = []
+		for move in moves:
+			piece.moves = []
+			self.make_move(piece, move)
+			if piece.color == "white": self.calc_all_moves("black")
+			else:  self.calc_all_moves("white")
+			
+			if self.checkmate:
+				to_be.append(move)
+			
+			self.undo_move(move, piece, move.final.piece)
+		for to in to_be:
+			moves.remove(to)
+		piece.moves = moves
+
+	def make_move(self, piece, move, isSafe = False):
 		initial = move.initial
 		final = move.final
+		captured = False
+		if self.chess[final.row][final.col].piece != None:
+			captured = True
 		self.chess[initial.row][initial.col].piece = None
 		self.chess[final.row][final.col].piece = piece
-		piece.moved = True
 		piece.moves = []
 		self.last_move = move
 		self.calc_all_moves(piece.color)
-
-	def undo_move(self, move, piece, opp):
+		if isSafe:
+			if captured: self.config.play_sound(self.config.capture_sound)
+			else: self.config.play_sound(self.config.move_sound) 
+			piece.moved = True
+		
+	def undo_move(self, move, piece, opp, isSafe = False):
 		self.chess[move.initial.row][move.initial.col].piece = piece
 		self.chess[move.final.row][move.final.col].piece = opp
+		self.last_move = Move(Square(-1, -1), Square(-1, -1))
 	
+	def in_range_move(self, moves, row, col):
+		for move in moves:
+			if move.final.row == row and move.final.col == col: return True
+		return False
+
 	def is_valid_move(self, piece, move):
 		return move in piece.moves
 	
