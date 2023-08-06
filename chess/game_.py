@@ -9,6 +9,7 @@ class Game:
 		self.board = Board()
 		self.dragger = Dragger()
 		self.hov = (-1, -1)
+		self.noMore = False
 	
 	def show_bg(self, screen):
 		for i in range(ROWS):
@@ -70,3 +71,22 @@ class Game:
 	
 	def set_hover(self, row, col):
 		self.hov = (row, col)
+
+	def end_game(self, screen):
+		font = pygame.font.Font(None, 120)
+		text_s = font.render("GAME OVER", True, (255, 255, 255))
+		if self.noMore:
+			cntr = (WIDTH // 2, HEIGHT // 2)
+			hide = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+			hide.fill((170, 130, 90, 128))
+			screen.blit(hide, (0, 0))
+			btn_new = (WIDTH // 2 - 100, (HEIGHT // 2 - 90) + 60, 120, 50)
+			pygame.draw.rect(screen, (150, 200, 90), btn_new, width=5)
+		else: 
+			cntr = (-200, -200)
+		if self.board.is_check[0] == True:
+			if self.board.is_game_over("white") or self.board.is_game_over("black"):
+				cntr = (WIDTH // 2, HEIGHT // 2)
+				self.noMore = True
+		text_rect = text_s.get_rect(center = cntr)
+		screen.blit(text_s, text_rect)
