@@ -12,6 +12,7 @@ class Board:
 		self.checkmate_pos = (-1, -1)
 		self.is_check = (False, None)
 		self.checkmate = False
+		self.game_over = False
 		self.create()
 		self.add_piece("white")
 		self.add_piece("black")
@@ -24,14 +25,13 @@ class Board:
 					if self.chess[row][col].piece.name == "king" and self.chess[row][col].piece.color == color:
 						return (row, col)
 	
-	def calc_all_moves(self, color):
+	def calc_all_moves(self, color, isSafe = False):
 		if color == "white":
 			pos = self.loc_of_king("black")
 		else:
 			pos = self.loc_of_king("white")
 		if(pos == None): 
 			return
-		
 		for row in range(ROWS):
 			for col in range(COLS):
 				if not self.chess[row][col].isEmpty():
@@ -39,12 +39,14 @@ class Board:
 						self.calc_moves(self.chess[row][col].piece, row, col)
 						for move in self.chess[row][col].piece.moves:
 							if move.final.row == pos[0] and move.final.col == pos[1]:
-								self.is_check = (True, self.chess[pos[0]][pos[1]].piece.color)
-								self.checkmate_pos = pos
+								if isSafe == False:
+									self.is_check = (True, self.chess[pos[0]][pos[1]].piece.color)
+									self.checkmate_pos = pos
 								self.checkmate = True
 								return
 		self.is_check = (False, None)
-		self.checkmate_pos = (-1, -1)
+		if isSafe == False:
+			self.checkmate_pos = (-1, -1)
 		self.checkmate = False
 
 	def construct_valid_moves(self, piece, row, col):
@@ -55,8 +57,8 @@ class Board:
 		for move in moves:
 			piece.moves = []
 			self.make_move(piece, move)
-			if piece.color == "white": self.calc_all_moves("black")
-			else:  self.calc_all_moves("white")
+			if piece.color == "white": self.calc_all_moves("black", True)
+			else:  self.calc_all_moves("white", True)
 			
 			if self.checkmate:
 				to_be.append(move)
@@ -65,6 +67,15 @@ class Board:
 		for to in to_be:
 			moves.remove(to)
 		piece.moves = moves
+
+	def is_game_over(self, color):
+		for row in range(ROWS):
+			for col in range(COLS):
+				if self.chess[row][col].has_team_piece(color):
+					self.construct_valid_moves(self.chess[row][col].piece, row, col)
+					if self.chess[row][col].piece.moves:
+						return False
+		return True
 
 	def make_move(self, piece, move, isSafe = False):
 		initial = move.initial
@@ -75,13 +86,14 @@ class Board:
 		self.chess[initial.row][initial.col].piece = None
 		self.chess[final.row][final.col].piece = piece
 		piece.moves = []
-		self.last_move = move
-		self.calc_all_moves(piece.color)
+		if isSafe == False: self.calc_all_moves(piece.color, True)
+		else: self.calc_all_moves(piece.color)
 		if isSafe:
 			if captured: self.config.play_sound(self.config.capture_sound)
 			else: self.config.play_sound(self.config.move_sound) 
 			piece.moved = True
-		
+			self.last_move = move
+
 	def undo_move(self, move, piece, opp, isSafe = False):
 		self.chess[move.initial.row][move.initial.col].piece = piece
 		self.chess[move.final.row][move.final.col].piece = opp
